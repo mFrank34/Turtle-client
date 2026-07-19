@@ -62,7 +62,7 @@ local function get_location()
 end
 
 local function connect()
-	local ws, err = http.websocket("wss://" .. CONFIG.host .. "/api/v1/workers/ws/" .. CONFIG.node_id)
+	local ws, err = http.websocket("wss://" .. CONFIG.host .. "/workers/ws/" .. CONFIG.node_id)
 	if not ws then
 		print("[TurtleNet] Failed to connect: " .. tostring(err))
 		return nil
