@@ -1,12 +1,13 @@
 local CONFIG = {
-	host = "turtle.frankslab.uk",
+	host = "192.168.10.2:8000",
 	node_id = os.getComputerLabel() or tostring(os.getComputerID()),
 	node_type = turtle and "turtle" or "computer",
+	api_key = "CHANGE_ME", -- must match TURTLENET_WORKER_KEY on the server
 }
 
 local function wait_for_server()
 	while true do
-		local ok = http.get("https://" .. CONFIG.host .. "/health")
+		local ok = http.get("http://" .. CONFIG.host .. "/health")
 		if ok then
 			ok.close()
 			print("[TurtleNet] Server is up, connecting...")
@@ -62,7 +63,10 @@ local function get_location()
 end
 
 local function connect()
-	local ws, err = http.websocket("wss://" .. CONFIG.host .. "/workers/ws/" .. CONFIG.node_id)
+	local ws, err = http.websocket(
+		"ws://" .. CONFIG.host .. "/api/v1/workers/ws/" .. CONFIG.node_id,
+		{ ["X-Api-Key"] = CONFIG.api_key }
+	)
 	if not ws then
 		print("[TurtleNet] Failed to connect: " .. tostring(err))
 		return nil
@@ -173,15 +177,17 @@ local function handle_command(data)
 	-- Global commands accessible by ALL node types
 	if cmd == "scan_inventory" then
 		return true
+
 	elseif cmd == "scan_peripherals" then
 		local peripherals = {}
-		for _, side in ipairs({ "left", "right", "top", "bottom", "front", "back" }) do
+		for _, side in ipairs({"left", "right", "top", "bottom", "front", "back"}) do
 			local p = peripheral.getType(side)
 			if p then
 				peripherals[side] = p
 			end
 		end
 		return true, peripherals
+
 	elseif cmd == "get_location" then
 		local loc, err = get_location()
 		if loc then
